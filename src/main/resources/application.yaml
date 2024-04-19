@@ -1,0 +1,24 @@
+logging:
+  level:
+    com.rivera.mailservice: DEBUG
+
+spring:
+  application:
+    name: mail-service
+  datasource:
+    url: jdbc:h2:mem:user
+    username: sa
+    password: password
+    driverClassName: org.h2.Driver
+  h2:
+    console.enabled: true
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    defer-datasource-initialization: true
+  mail:
+    host: mailcatcher
+    port: 1025
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html

@@ -1,0 +1,16 @@
+version: "3"
+
+services:
+  mailservice:
+    restart: on-failure
+    image: mail-service:1.0.0
+    ports:
+    - "8080:8080"
+
+  mailcatcher:
+    restart: on-failure
+    image: dockage/mailcatcher:0.9.0
+    ports:
+    - "1080:1080"
+    - "1025:1025"
+    hostname: mailcatcher
