@@ -3,19 +3,23 @@ package com.rivera.mailservice.mail.service;
 import com.rivera.mailservice.mail.exception.EmailDeliveryException;
 import com.rivera.mailservice.mail.model.Email;
 import com.rivera.mailservice.mail.util.EmailUtils;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mail.MailSendException;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.transaction.TestTransaction;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 
 @SpringBootTest
 @Transactional
@@ -52,22 +56,24 @@ class MailDeliveryServiceIntegrationTest {
     }
 
     @Test
-    @Disabled("Problem catching exception when Test Class is @Transactional")
+    @DirtiesContext
     public void whenSendEmailFails_shouldThrowExceptionAndRollbackTransaction() {
         Email email = new Email();
+        email.setUserId(1L);
         email.setRecipient("daffy.duck@email.com");
         email.setSender("no-reply@mailserver.com");
         email.setSubject("Test Subject");
         email.setText("Test Body");
 
-
         EmailDeliveryException e = assertThrows(EmailDeliveryException.class, () -> {
-            doThrow(new RuntimeException()).when(mockMailSender).send(EmailUtils.toSimpleMailMessage(email));
+            doThrow(new MailSendException("Failed")).when(mockMailSender)
+                    .send(any(SimpleMailMessage.class));
+
             mailDeliveryService.sendEmail(email);
         });
 
         assertEquals("Failed to send email to 'daffy.duck@email.com'", e.getMessage());
-        assertEquals(3, mailService.getEmails().size());
+        assertTrue(TestTransaction.isFlaggedForRollback());
     }
 
 

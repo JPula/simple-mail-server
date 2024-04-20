@@ -1,6 +1,7 @@
 package com.rivera.mailservice.user.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -11,8 +12,8 @@ import lombok.NoArgsConstructor;
 @Entity(name = "mail_user")
 @NoArgsConstructor
 @Table(uniqueConstraints = {
-        @UniqueConstraint(name = "UNIQUE_USERNAME_CONSTRAINT", columnNames = "user_name"),
-        @UniqueConstraint(name = "UNIQUE_EMAIL_CONSTRAINT", columnNames = "email_address"),
+        @UniqueConstraint(name = User.Constraint.UNIQUE_USERNAME_CONSTRAINT, columnNames = "user_name"),
+        @UniqueConstraint(name = User.Constraint.UNIQUE_EMAIL_CONSTRAINT, columnNames = "email_address"),
 })
 public class User {
     @Id
@@ -41,6 +42,12 @@ public class User {
         this.firstName = firstName;
         this.lastName = lastName;
         this.emailAddress = emailAddress;
+    }
+
+    public static class Constraint {
+        public static final String UNIQUE_USERNAME_CONSTRAINT = "UNIQUE_USERNAME_CONSTRAINT";
+        public static final String UNIQUE_EMAIL_CONSTRAINT = "UNIQUE_EMAIL_CONSTRAINT";
+
     }
 
 }

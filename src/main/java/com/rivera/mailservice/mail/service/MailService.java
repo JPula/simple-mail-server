@@ -16,7 +16,7 @@ public class MailService {
 
     private final MailRepository mailRepository;
 
-    public Email createEmail(@Valid Email email) {
+    public Email createEmail(Email email) {
         log.debug("[START] Create email: " + email);
         Email savedEmail = mailRepository.save(email);
         log.debug("[END] Created email: " + email);

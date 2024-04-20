@@ -1,17 +1,22 @@
 package com.rivera.mailservice.user.service;
 
-import com.rivera.mailservice.user.exception.EmailAddressAlreadyRegisteredException;
-import com.rivera.mailservice.user.exception.UsernameTakenException;
 import com.rivera.mailservice.user.model.User;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.TransactionSystemException;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collection;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doNothing;
@@ -45,9 +50,11 @@ public class UserRegistrationServiceIntegrationTest {
     void givenUserInfoButUsernameAlreadyExists_whenRegisterUser_thenThrowException() {
         User expected = new User("betty.boop", "Betty", "Boop", "alt-betty.boop@email.com");
 
-        assertThrows(UsernameTakenException.class, () -> {
+        DataIntegrityViolationException e = assertThrows(DataIntegrityViolationException.class, () -> {
             userRegistrationService.registerUser(expected);
         });
+
+        assertTrue(e.getMessage().contains(User.Constraint.UNIQUE_USERNAME_CONSTRAINT));
     }
 
     @Test
@@ -55,9 +62,11 @@ public class UserRegistrationServiceIntegrationTest {
     void givenUserInfoButEmailAlreadyExists_whenRegisterUser_thenThrowException() {
         User expected = new User("betty.boop2", "Betty", "Boop", "betty.boop@email.com");
 
-        assertThrows(EmailAddressAlreadyRegisteredException.class, () -> {
+        DataIntegrityViolationException e = assertThrows(DataIntegrityViolationException.class, () -> {
             userRegistrationService.registerUser(expected);
         });
+
+        assertTrue(e.getMessage().contains(User.Constraint.UNIQUE_EMAIL_CONSTRAINT));
     }
 
     @Test
@@ -69,9 +78,70 @@ public class UserRegistrationServiceIntegrationTest {
             userRegistrationService.registerUser(expected);
         });
 
-        e.
+        ConstraintViolationException constraintViolationException = (ConstraintViolationException) e.getMostSpecificCause();
+        List<ConstraintViolation<?>> constraintViolations = constraintViolationException.getConstraintViolations().stream().toList();
 
-        assertEquals(e.getMessage(), "userName cannot be blank.");
+        assertEquals(constraintViolations.get(0).getMessage(), "userName cannot be blank.");
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NEVER)
+    void givenUserInfoWithMissingFirstName_whenRegisterUser_thenThrowException() {
+        User expected = new User("betty.boop", "", "Boop", "alt-betty.boop@email.com");
+
+        TransactionSystemException e = assertThrows(TransactionSystemException.class, () -> {
+            userRegistrationService.registerUser(expected);
+        });
+
+        ConstraintViolationException constraintViolationException = (ConstraintViolationException) e.getMostSpecificCause();
+        List<ConstraintViolation<?>> constraintViolations = constraintViolationException.getConstraintViolations().stream().toList();
+
+        assertEquals(constraintViolations.get(0).getMessage(), "firstName cannot be blank.");
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NEVER)
+    void givenUserInfoWithMissingLastName_whenRegisterUser_thenThrowException() {
+        User expected = new User("betty.boop", "Betty", "", "alt-betty.boop@email.com");
+
+        TransactionSystemException e = assertThrows(TransactionSystemException.class, () -> {
+            userRegistrationService.registerUser(expected);
+        });
+
+        ConstraintViolationException constraintViolationException = (ConstraintViolationException) e.getMostSpecificCause();
+        List<ConstraintViolation<?>> constraintViolations = constraintViolationException.getConstraintViolations().stream().toList();
+
+        assertEquals(constraintViolations.get(0).getMessage(), "lastName cannot be blank.");
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NEVER)
+    void givenUserInfoWithMissingEmail_whenRegisterUser_thenThrowException() {
+        User expected = new User("betty.boop", "Betty", "Boop", "");
+
+        TransactionSystemException e = assertThrows(TransactionSystemException.class, () -> {
+            userRegistrationService.registerUser(expected);
+        });
+
+        ConstraintViolationException constraintViolationException = (ConstraintViolationException) e.getMostSpecificCause();
+        List<ConstraintViolation<?>> constraintViolations = constraintViolationException.getConstraintViolations().stream().toList();
+
+        assertEquals(constraintViolations.get(0).getMessage(), "emailAddress cannot be blank.");
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NEVER)
+    void givenUserInfoWithInvalidEmail_whenRegisterUser_thenThrowException() {
+        User expected = new User("betty.boop", "Betty", "Boop", "betty");
+
+        TransactionSystemException e = assertThrows(TransactionSystemException.class, () -> {
+            userRegistrationService.registerUser(expected);
+        });
+
+        ConstraintViolationException constraintViolationException = (ConstraintViolationException) e.getMostSpecificCause();
+        List<ConstraintViolation<?>> constraintViolations = constraintViolationException.getConstraintViolations().stream().toList();
+
+        assertEquals(constraintViolations.get(0).getMessage(), "invalid email format.");
     }
 
 }
