@@ -7,7 +7,7 @@ A simple mail server with API for user management.
 - Docker and Docker Compose must be available on the machine (https://docs.docker.com/compose/install)
 
 ### Installation
-1. Download and unzip the Mail Server Release ()
+1. Download and unzip the Mail Server Release (https://github.com/JPula/simple-mail-server/releases/download/1.0.0/mail-server.zip)
 2. Open a Terminal and Navigate to Mail Server Directory.
 ```
 $ cd <path/to/mail/server/directory> 
